@@ -1,6 +1,7 @@
 # NanoGpt
 
 Goal: How GPT(Generative Pretrained Transformers) works under the hood.
+
 Source: [Karpathy's NanoGpt](https://github.com/karpathy/nanoGPT)
 
 ## Process
