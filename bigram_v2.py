@@ -84,6 +84,17 @@ class Head(nn.Module):
         out = wei @ v # (B, T, T) @ (B, T, C) --> (B, T, C)
         return out
 
+class MultiHeadAttention(nn.Module):
+    """
+    multiple heads of self attention in parallel
+    """
+
+    def __init__(self, num_heads, head_size) -> None:
+        super().__init__()
+        self.heads = nn.ModuleList([Head(head_size=head_size) for _ in range(num_heads)])
+
+    def forward(self, x):
+        return torch.cat([h(x) for h in self.heads], dim=-1) # concatenate heads results along channel dimension
 
 class BigramLanguageModel(nn.Module):
     # Removing vocab_size from constructor as it's a global variable
@@ -92,7 +103,11 @@ class BigramLanguageModel(nn.Module):
         # For each token lookup nexr character from a lookup table
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
         self.position_embedding_table = nn.Embedding(block_size, n_embd)
-        self.sa_head = Head(n_embd)
+        # Instead of sinlge large attenetion head, parallel processing with mutliple attention heads
+        self.sa_heads = MultiHeadAttention(
+            num_heads=4, # Number of single attention heads running in parallel
+            head_size=n_embd//4 # Head size for single attention head 32 / 4 --> 8 * num_heads is 32
+            )
         self.lm_head = nn.Linear(n_embd, vocab_size)
 
     def forward(self, idx, targets=None):
@@ -103,7 +118,7 @@ class BigramLanguageModel(nn.Module):
         token_emb = self.token_embedding_table(idx)  # (B, T, C), c-> n_embd
         pos_embd = self.position_embedding_table(torch.arange(T, device=device)) # (T, C)
         x = token_emb + pos_embd # (B, T, C)
-        x = self.sa_head(x)
+        x = self.sa_heads(x)
         logits = self.lm_head(x) # (B, T, vocab_size)
 
         if targets is None:
