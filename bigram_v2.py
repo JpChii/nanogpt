@@ -86,7 +86,7 @@ class Head(nn.Module):
 
 class MultiHeadAttention(nn.Module):
     """
-    multiple heads of self attention in parallel
+    multiple heads of self attention in parallel, Communication layer
     """
 
     def __init__(self, num_heads, head_size) -> None:
@@ -95,6 +95,20 @@ class MultiHeadAttention(nn.Module):
 
     def forward(self, x):
         return torch.cat([h(x) for h in self.heads], dim=-1) # concatenate heads results along channel dimension
+
+class FeedForward(nn.Module):
+    """
+    Computation layer after communication betwee tokens in attention layers
+    """
+    def __init__(self, n_embd) -> None:
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(n_embd, n_embd), # embd * embd matrix
+            nn.ReLU() # Non linear activation
+        )
+        
+    def forward(self, x):
+        return self.net(x)
 
 class BigramLanguageModel(nn.Module):
     # Removing vocab_size from constructor as it's a global variable
@@ -108,6 +122,7 @@ class BigramLanguageModel(nn.Module):
             num_heads=4, # Number of single attention heads running in parallel
             head_size=n_embd//4 # Head size for single attention head 32 / 4 --> 8 * num_heads is 32
             )
+        self.ffn = FeedForward(n_embd=n_embd)
         self.lm_head = nn.Linear(n_embd, vocab_size)
 
     def forward(self, idx, targets=None):
@@ -118,7 +133,9 @@ class BigramLanguageModel(nn.Module):
         token_emb = self.token_embedding_table(idx)  # (B, T, C), c-> n_embd
         pos_embd = self.position_embedding_table(torch.arange(T, device=device)) # (T, C)
         x = token_emb + pos_embd # (B, T, C)
-        x = self.sa_heads(x)
+        x = self.sa_heads(x) # (B, T, C)
+        # Calculating logits too quick after multi-head attention let's add a feed forward network
+        x = self.ffn(x) # (B, T, C)
         logits = self.lm_head(x) # (B, T, vocab_size)
 
         if targets is None:
