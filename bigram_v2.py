@@ -192,29 +192,66 @@ class BigramLanguageModel(nn.Module):
         return idx
 
 
-model = BigramLanguageModel()
-m = model.to(device)
+def train():
+    model = BigramLanguageModel()
+    m = model.to(device)
 
-# Create a pytorch optimizer
-optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
+    # Create a pytorch optimizer
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
-for iter in range(max_iters):
-    # every once in a while evalute the loss on train and val sets
-    if iter % eval_interval == 0:
-        losses = estimate_loss()
-        print(
-            f"Step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}"
-        )
+    for iter in range(max_iters):
+        # every once in a while evalute the loss on train and val sets
+        if iter % eval_interval == 0:
+            losses = estimate_loss()
+            print(
+                f"Step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}"
+            )
 
-    # sample a batch of data
-    xb, yb = get_batch("train")
+        # sample a batch of data
+        xb, yb = get_batch("train")
 
-    # evaluate the loss
-    logits, loss = model(xb, yb)
-    optimizer.zero_grad(set_to_none=True)
-    loss.backward()
-    optimizer.step()
+        # evaluate the loss
+        logits, loss = model(xb, yb)
+        optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+        optimizer.step()
 
-# generate from the model
-context = torch.zeros((1, 1), dtype=torch.long, device=device)
-print(decode(m.generate(context, max_new_tokens=500)[0].tolist()))
+    # generate from the model
+    context = torch.zeros((1, 1), dtype=torch.long, device=device)
+    print(decode(m.generate(context, max_new_tokens=500)[0].tolist()))
+
+def generate():
+    model = BigramLanguageModel()
+    model.load_state_dict(torch.load("nanogpt.pt", map_location=device))
+    context = torch.zeros((1, 1), dtype=torch.long, device=device)
+    print(decode(model.generate(context, max_new_tokens=500)[0].tolist()))
+
+generate()
+
+# Results from colab
+# --------------------------
+
+# Step 0: train loss 4.2846, val loss 4.2820
+# Step 500: train loss 1.8865, val loss 2.0023
+# Step 1000: train loss 1.5361, val loss 1.7221
+# Step 1500: train loss 1.3948, val loss 1.6038
+# Step 2000: train loss 1.3077, val loss 1.5490
+# Step 2500: train loss 1.2523, val loss 1.5153
+# Step 3000: train loss 1.2010, val loss 1.4894
+# Step 3500: train loss 1.1587, val loss 1.4800
+# Step 4000: train loss 1.1222, val loss 1.4800
+# Step 4500: train loss 1.0853, val loss 1.4736
+
+# But with price of a breast sast-creatories?
+# For my Capitol, the Lude haste of Green:
+# The story king o'er match'd the night, his bosom mind;
+# But every more like his desired or her,
+# And swore let the heirs of the time
+# He right; see the duke our dry clooks when he flesh:
+# We say, let the waking of warth, with war our drive;
+# Which is the old field spice, if waxed the park,
+# Frowardly gladling back'd with Clarence, wife comely helps,
+# Strucking in the heather cell his own his royal frience.
+
+# HENRY BOLIN
+# --------------------------
