@@ -110,6 +110,22 @@ class FeedForward(nn.Module):
     def forward(self, x):
         return self.net(x)
 
+class Block(nn.Module):
+    """
+    Transformer block communication followed by compuation
+    """
+
+    def __init__(self, n_embd, n_head) -> None:
+        super().__init__()
+        head_size = n_embd // n_head
+        self.sa = MultiHeadAttention(num_heads=n_head, head_size=head_size)
+        self.ffwd = FeedForward(n_embd=n_embd)
+
+    def forward(self, x):
+        x = self.sa(x)
+        x = self.ffwd(x)
+        return x
+
 class BigramLanguageModel(nn.Module):
     # Removing vocab_size from constructor as it's a global variable
     def __init__(self):
@@ -117,12 +133,13 @@ class BigramLanguageModel(nn.Module):
         # For each token lookup nexr character from a lookup table
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
         self.position_embedding_table = nn.Embedding(block_size, n_embd)
-        # Instead of sinlge large attenetion head, parallel processing with mutliple attention heads
-        self.sa_heads = MultiHeadAttention(
-            num_heads=4, # Number of single attention heads running in parallel
-            head_size=n_embd//4 # Head size for single attention head 32 / 4 --> 8 * num_heads is 32
-            )
-        self.ffn = FeedForward(n_embd=n_embd)
+        # Replacing sa and ffd with communication and computaional blocls
+        self.blocks = nn.Sequential(
+            Block(n_embd=n_embd, n_head=4),
+            Block(n_embd=n_embd, n_head=4),
+            Block(n_embd=n_embd, n_head=4),
+            Block(n_embd=n_embd, n_head=4),
+        )
         self.lm_head = nn.Linear(n_embd, vocab_size)
 
     def forward(self, idx, targets=None):
@@ -133,9 +150,7 @@ class BigramLanguageModel(nn.Module):
         token_emb = self.token_embedding_table(idx)  # (B, T, C), c-> n_embd
         pos_embd = self.position_embedding_table(torch.arange(T, device=device)) # (T, C)
         x = token_emb + pos_embd # (B, T, C)
-        x = self.sa_heads(x) # (B, T, C)
-        # Calculating logits too quick after multi-head attention let's add a feed forward network
-        x = self.ffn(x) # (B, T, C)
+        x = self.blocks(x)
         logits = self.lm_head(x) # (B, T, vocab_size)
 
         if targets is None:
