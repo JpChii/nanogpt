@@ -34,8 +34,11 @@ itos = {i: ch for ch, i in contexts.items()}
 # Dropdown default option
 default_option = "Select option"
 
-# Max sequence length
+# Demo parameters
+# Max sequence length for genretive text
 max_sequence_length_options = ["500", "1000", "1500", "2000", "2500"]
+# Info on Demo
+st.sidebar.title("Info & Params")
 st.sidebar.write(
     """
     This demo is built on top of a character level language model from shakespere text dataset. This is built by referring to andrei karpathy's nanogpt.
@@ -45,6 +48,7 @@ st.sidebar.write(
     * Initial context - This is the initial character context to generate text, simply put starting point of text generation.
     """ 
 )
+st.sidebar.markdown("[Source Code](https://github.com/JpChii/nanogpt)")
 selected_seq_length = st.sidebar.selectbox(
     "Max Length",
     max_sequence_length_options,
