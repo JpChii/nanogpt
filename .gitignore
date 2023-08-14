@@ -13,7 +13,7 @@ __pycache__/
 *.tmp
 
 # IDE and editor specific files
-.vscode/*
+.vscode/
 .idea/
 *.sublime-project
 *.sublime-workspace
