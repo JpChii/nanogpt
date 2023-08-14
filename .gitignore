@@ -1,1 +1,44 @@
 mlruns/*
+playground.ipynb
+
+# Python cache, compiled, and temporary files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyz
+*.pyzw
+*.swp
+*.bak
+*.tmp
+
+# IDE and editor specific files
+.vscode/*
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Dependency directories
+venv/
+env/
+env.bak/
+env/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Logs and logs directories
+logs/
+*.log
+
+# Miscellaneous
+*.DS_Store
+*.bak
+*.tmp
+
+# Ignore sensitive or environment-specific information
+.env
+.env.*

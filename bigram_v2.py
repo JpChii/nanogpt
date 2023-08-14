@@ -220,14 +220,14 @@ def train():
     context = torch.zeros((1, 1), dtype=torch.long, device=device)
     print(decode(m.generate(context, max_new_tokens=500)[0].tolist()))
 
-def generate():
+def generate(context, max_new_tokens):
     model = BigramLanguageModel()
     model.load_state_dict(torch.load("nanogpt.pt", map_location=device))
     context = torch.zeros((1, 1), dtype=torch.long, device=device)
     print(decode(model.generate(context, max_new_tokens=500)[0].tolist()))
 
-generate()
-
+# xb, yb = get_batch("train")
+# print(xb.shape)
 # Results from colab
 # --------------------------
 
